@@ -1,5 +1,10 @@
 import { useState } from 'react'
 
+import Swal from 'sweetalert2'
+import withReactContent from 'sweetalert2-react-content'
+
+const MySwal = withReactContent(Swal)
+
 import api from '../../services';
 
 import { BiSolidMap } from 'react-icons/bi'
@@ -24,7 +29,8 @@ function ZipFinder() {
     event.preventDefault();
 
     if (cepInput === '') {
-      alert('Preencha algum CEP')
+      //alert('Preencha algum CEP')
+      MySwal.fire('Preencha algum CEP')
       setLoading(false)
       return;
     }
@@ -82,7 +88,7 @@ function ZipFinder() {
                       <p className="fw-bold mb-1">
                         Rua/Logradouro
                       </p>
-                      <p className="fs-sm text-muted mb-0" data-cy="logradouro">
+                      <p className="fs-sm text-muted mb-0" data-cy="street">
                         {address.logradouro}
                       </p>
                     </div>
@@ -100,7 +106,7 @@ function ZipFinder() {
                       <p className="fw-bold mb-1">
                         Bairro
                       </p>
-                      <p className="fs-sm text-muted mb-0" data-cy="bairro">
+                      <p className="fs-sm text-muted mb-0" data-cy="district">
                         {address.bairro}
                       </p>
                     </div>
@@ -118,7 +124,7 @@ function ZipFinder() {
                       <p className="fw-bold mb-1">
                         Cidade/Estado
                       </p>
-                      <p className="fs-sm text-muted mb-0" data-cy="cidade_uf">
+                      <p className="fs-sm text-muted mb-0" data-cy="city">
                         {address.cidade_uf}
                       </p>
                     </div>
@@ -136,7 +142,7 @@ function ZipFinder() {
                       <p className="fw-bold mb-1">
                         CEP
                       </p>
-                      <p className="fs-sm text-muted mb-0" data-cy="cep">
+                      <p className="fs-sm text-muted mb-0" data-cy="zipcode">
                         {address.cep}
                       </p>
                     </div>
