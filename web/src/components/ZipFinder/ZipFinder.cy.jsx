@@ -1,106 +1,89 @@
 import React from 'react'
 import ZipFinder from './ZipFinder'
 
+const VALID_ADDRESS = {
+  zipcode: '04534-011',
+  street: 'Rua Joaquim Floriano',
+  district: 'Itaim Bibi',
+  city: 'São Paulo/SP'
+}
+
+const INVALID_CEP = '0000000'
+const OUT_OF_COVERAGE_CEP = '00000000'
+
 describe('<ZipFinder />', () => {
 
   beforeEach(() => {
-    cy.mount(<ZipFinder/>)
-
+    cy.mount(<ZipFinder />)
     cy.viewport(1280, 768)
 
-
+    // Define Alias
     cy.get('[data-cy=inputCep]').as('inputCep')
     cy.get('[data-cy=submitCep]').as('submitCep')
+    cy.get('[data-cy=street]').as('street')
+    cy.get('[data-cy=district]').as('district')
+    cy.get('[data-cy=city]').as('city')
+    cy.get('[data-cy=zipcode]').as('zipcode')
     
+
   });
 
-  it('Deve buscar um cep na area de cobertura', () => {
+  it('deve exibir os detalhes do endereço para um CEP válido na área de cobertura', () => {
+    cy.zipFind(VALID_ADDRESS, true)
+  
 
-    const address = {
-      street: 'Rua Joaquim Floriano',
-      district: 'Itaim Bibi',
-      city: 'São Paulo/SP',
-      zipcode: '04534-011'
-
-    }
-
-    cy.zipFind(address, true)
-
-
-
-    cy.get('[data-cy=street]')
-      .should('have.text', address.street)
-
-    cy.get('[data-cy=district]')
-      .should('have.text', address.district)
-
-    cy.get('[data-cy=city]')
-      .should('have.text', address.city)
-
-    cy.get('[data-cy=zipcode]')
-      .should('have.text', address.zipcode)
-  })
-  it('Cep deve ser obrigatório', ()=> {
+    cy.get('@street').should('have.text', VALID_ADDRESS.street)
+    cy.get('@district').should('have.text', VALID_ADDRESS.district)
+    cy.get('@city').should('have.text', VALID_ADDRESS.city)
+    cy.get('@zipcode').should('have.text', VALID_ADDRESS.zipcode)
+    cy.get('[data-cy=notice]').should('not.exist')
     
+  })
+  it('deve exibir uma mensagem de erro quando o CEP estiver vazio', () => {
     cy.get('@submitCep').click()
 
-    cy.get('#swal2-title')
-      .should('have.text', 'Preencha algum CEP')
-
+    cy.get('#swal2-title').should('have.text', 'Preencha algum CEP')
     cy.get('.swal2-confirm').click()
   })
-  it('Cep inválido', () => {
 
-    const address = {zipcode: '0000000'}
+  it('deve exibir uma mensagem de erro para um CEP com formato inválido', () => {
 
-    cy.zipFind(address)
+    cy.zipFind({zipcode: INVALID_CEP})
 
-    cy.get('[data-cy="notice"]')
+    cy.get('[data-cy=notice]')
       .should('be.visible')
       .should('have.text', 'CEP no formato inválido.')
-
-
   })
 
-  it('Cep fora da área de cobertura', () => {
+  it('deve exibir uma mensagem para um CEP fora da área de cobertura', () => {
+    cy.zipFind({zipcode: OUT_OF_COVERAGE_CEP})
 
-    const zipcode = '00000000'
-
-    cy.get('@inputCep').type(zipcode)
-    cy.get('@submitCep').click()
-
-    cy.get('[data-cy="notice"]')
+    cy.get('[data-cy=notice]')
       .should('be.visible')
       .should('have.text', 'No momento não atendemos essa região.')
-
 
   })
 })
 
 Cypress.Commands.add('zipFind', (address, mock = false) => {
-  
-  if(mock) {
 
-    cy.intercept('GET', '/zipcode/*', {
+  if (mock) {
+    cy.intercept('GET', `/zipcode/${address.zipcode}`, {
       statusCode: 200,
       body: {
         cep: address.zipcode,
-        logradouro: address.street,
-        cidade_uf: address.city,
-        bairro: address.district
+        logradouro: address.street || '',
+        cidade_uf: address.city || '',
+        bairro: address.district || ''
       }
-    }).as('getZipCode')
+    }).as(`getZipCode-${address.zipcode}`)
 
   }
-  
 
-  cy.get('@inputCep').type(address.zipcode)
+  cy.get('@inputCep').clear().type(address.zipcode)
   cy.get('@submitCep').click()
 
-  if(mock) {
-
-    cy.wait('@getZipCode')
+  if (mock) {
+    cy.wait(`@getZipCode-${address.zipcode}`)
   }
-
-  
 })
